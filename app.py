@@ -1,14 +1,14 @@
 """Streamlit RAG Document Assistant Application."""
 
 import os
-import sys
+# import sys
 import streamlit as st
 
 # Auto-launch Streamlit server and browser if invoked directly via `python app.py`
-if __name__ == "__main__" and not st.runtime.exists():
-    import streamlit.web.cli as stcli
-    sys.argv = ["streamlit", "run", os.path.abspath(__file__)]
-    sys.exit(stcli.main())
+# if __name__ == "__main__" and not st.runtime.exists():
+#     import streamlit.web.cli as stcli
+#     sys.argv = ["streamlit", "run", os.path.abspath(__file__)]
+#     sys.exit(stcli.main())
 
 from dotenv import load_dotenv
 
