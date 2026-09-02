@@ -19,9 +19,7 @@ from pydantic import Field
 from groq import Groq
 
 
-# ============================================================
-# LOAD ENVIRONMENT VARIABLES
-# ============================================================
+
 
 load_dotenv()
 
@@ -34,9 +32,7 @@ if not GROQ_API_KEY:
     )
 
 
-# ============================================================
-# 1. LOAD PDF
-# ============================================================
+
 
 pdf_path = "data/documents/Leave Policy 1.0.pdf"
 
@@ -49,9 +45,6 @@ documents = loader.load()
 print(f"Number of pages: {len(documents)}")
 
 
-# ============================================================
-# 2. SPLIT DOCUMENT INTO CHUNKS
-# ============================================================
 
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
@@ -63,9 +56,6 @@ chunks = text_splitter.split_documents(documents)
 print(f"Number of chunks: {len(chunks)}")
 
 
-# ============================================================
-# 3. LOAD HUGGING FACE EMBEDDING MODEL
-# ============================================================
 
 print("\nLoading Hugging Face embedding model...")
 
@@ -73,12 +63,7 @@ embedding_model = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-V2"
 )
 
-print("✓ Embedding model loaded")
 
-
-# ============================================================
-# 4. CREATE FAISS VECTOR STORE
-# ============================================================
 
 print("\nCreating FAISS vector store...")
 
@@ -87,21 +72,14 @@ vector_store = FAISS.from_documents(
     embedding=embedding_model
 )
 
-print("✓ FAISS vector store created")
 
-
-# ============================================================
-# 5. CREATE VECTOR RETRIEVER
-# ============================================================
 
 vector_retriever = vector_store.as_retriever(
     search_kwargs={"k": 5}
 )
 
 
-# ============================================================
-# 6. CREATE BM25 RETRIEVER
-# ============================================================
+
 
 print("\nCreating BM25 retriever...")
 
@@ -115,9 +93,7 @@ bm25 = BM25Okapi(tokenized_chunks)
 print("✓ BM25 retriever created")
 
 
-# ============================================================
-# 7. CUSTOM BM25 RETRIEVER
-# ============================================================
+
 
 class BM25Retriever(BaseRetriever):
 
@@ -151,9 +127,7 @@ bm25_retriever = BM25Retriever(
 )
 
 
-# ============================================================
-# 8. HYBRID RETRIEVER
-# ============================================================
+
 
 class HybridRetriever(BaseRetriever):
 
@@ -171,28 +145,18 @@ class HybridRetriever(BaseRetriever):
         **kwargs: Any
     ) -> list[Document]:
 
-        # --------------------------------------------
-        # Vector search
-        # --------------------------------------------
+        
 
         vector_results: list[Document] = self.vector_retriever.invoke(query)
 
-        # --------------------------------------------
-        # BM25 search
-        # --------------------------------------------
+        
 
         bm25_results: list[Document] = self.bm25_retriever.invoke(query)
 
-        # --------------------------------------------
-        # Store scores
-        # --------------------------------------------
+     
 
         scores: dict[str, float] = {}
         documents: dict[str, Document] = {}
-
-        # --------------------------------------------
-        # Vector results
-        # --------------------------------------------
 
         for rank, doc in enumerate(vector_results):
 
@@ -204,9 +168,7 @@ class HybridRetriever(BaseRetriever):
                 1.0 / (self.rrf_k + rank + 1)
             )
 
-        # --------------------------------------------
-        # BM25 results
-        # --------------------------------------------
+       
 
         for rank, doc in enumerate(bm25_results):
 
@@ -218,9 +180,7 @@ class HybridRetriever(BaseRetriever):
                 1.0 / (self.rrf_k + rank + 1)
             )
 
-        # --------------------------------------------
-        # Sort by RRF score
-        # --------------------------------------------
+        
 
         ranked_documents = sorted(
             documents.values(),
@@ -231,9 +191,7 @@ class HybridRetriever(BaseRetriever):
         return ranked_documents[:self.k]
 
 
-# ============================================================
-# 9. CREATE HYBRID RETRIEVER
-# ============================================================
+
 
 hybrid_retriever = HybridRetriever(
     vector_retriever=vector_retriever,
@@ -242,9 +200,7 @@ hybrid_retriever = HybridRetriever(
 )
 
 
-# ============================================================
-# 10. CONNECT TO GROQ
-# ============================================================
+
 
 print("\nConnecting to Groq...")
 
@@ -255,9 +211,6 @@ groq_client = Groq(
 print("✓ Groq client ready")
 
 
-# ============================================================
-# 11. MAIN RAG LOOP
-# ============================================================
 
 print("\n" + "=" * 60)
 print("RAG DOCUMENT ASSISTANT")
@@ -270,9 +223,7 @@ while True:
 
     query = input("\nAsk a question about the document: ")
 
-    # --------------------------------------------
-    # Exit
-    # --------------------------------------------
+
 
     if query.lower().strip() in ["exit", "quit"]:
 
@@ -280,9 +231,7 @@ while True:
 
         break
 
-    # --------------------------------------------
-    # Empty query
-    # --------------------------------------------
+   
 
     if not query.strip():
 
@@ -290,9 +239,7 @@ while True:
 
         continue
 
-    # --------------------------------------------
-    # RETRIEVAL
-    # --------------------------------------------
+ 
 
     print("\nSearching document...")
 
@@ -300,9 +247,7 @@ while True:
 
     print(f"✓ Retrieved {len(results)} relevant chunks")
 
-    # --------------------------------------------
-    # BUILD CONTEXT
-    # --------------------------------------------
+    
 
     context = "\n\n".join(
         [
@@ -312,9 +257,7 @@ while True:
         ]
     )
 
-    # --------------------------------------------
-    # PROMPT
-    # --------------------------------------------
+   
 
     prompt = f"""
 You are a helpful document question-answering assistant.
@@ -341,9 +284,7 @@ Question:
 Answer:
 """
 
-    # --------------------------------------------
-    # GROQ GENERATION
-    # --------------------------------------------
+   
 
     print("\nGenerating answer...\n")
 
@@ -372,9 +313,7 @@ Answer:
 
         answer = response.choices[0].message.content
 
-        # --------------------------------------------
-        # DISPLAY ANSWER
-        # --------------------------------------------
+        
 
         print("=" * 60)
         print("ANSWER")
@@ -382,9 +321,7 @@ Answer:
 
         print(answer)
 
-        # --------------------------------------------
-        # DISPLAY SOURCES
-        # --------------------------------------------
+      
 
         print("\n" + "=" * 60)
         print("SOURCES")

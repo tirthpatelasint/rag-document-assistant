@@ -13,6 +13,7 @@ def main():
     project_dir = os.path.dirname(os.path.abspath(__file__))
     app_path = os.path.join(project_dir, "app.py")
 
+
     # Prefer virtual environment streamlit/python if present
     venv_streamlit = os.path.join(project_dir, "venv", "Scripts", "streamlit.exe")
     venv_python = os.path.join(project_dir, "venv", "Scripts", "python.exe")
